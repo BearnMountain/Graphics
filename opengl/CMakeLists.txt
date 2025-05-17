@@ -3,6 +3,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(FIRST_ATTEMPT_OPENGL)
 
+add_definitions(-DGL_SILENCE_DEPRECATION)
+
 # GLFW
 include(FetchContent)
 FetchContent_Declare(
@@ -25,9 +27,15 @@ FetchContent_MakeAvailable(GLM)
 add_library(GLAD external/glad/src/gl.c)
 target_include_directories(GLAD PUBLIC external/glad/include)
 
+# OPEnGL 
+find_library(OpenGL_LIBRARY OpenGL)
+
+# Silence Warnings 
+# find_package(Doxygen QUIET)
+
 file(GLOB_RECURSE SOURCES src/*.cpp)
 
 add_executable(FIRST_ATTEMPT_OPENGL ${SOURCES})
 target_include_directories(FIRST_ATTEMPT_OPENGL PRIVATE src) 
-target_link_libraries(FIRST_ATTEMPT_OPENGL GLAD glfw glm)
+target_link_libraries(FIRST_ATTEMPT_OPENGL GLAD glfw glm ${OpenGL_LIBRARY})
 
