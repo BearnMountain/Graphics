@@ -29,7 +29,10 @@ int main(void) {
 		return -1;
 	}
 
-	glViewport(0,0,800,600);
+	// setting viewport to macos set value
+	int fbWidth, fbHeight;
+	glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+	glViewport(0,0,fbWidth,fbHeight);
 	// allows for user resize of window
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
 		glViewport(0,0,width,height);

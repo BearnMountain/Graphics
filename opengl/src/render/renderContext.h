@@ -24,6 +24,7 @@ private:
 	unsigned int shader_program;
 	unsigned int vertex_buffer_object;
 	unsigned int vertex_array_object;
+	unsigned int element_buffer_object; // reduces vertexes put into memory and rendered(overlapping vertices/common indices)
 };
 
 #endif

@@ -7,9 +7,15 @@
 
 RenderContext::RenderContext(GLFWwindow* window) : window(window) {
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.0f,  0.5f, 0.0f
+		 0.5f,  0.5f, 0.0f,  // 0: top right
+		 0.5f, -0.5f, 0.0f,  // 1: bottom right
+		-0.5f,  0.5f, 0.0f,  // 2: top left
+		-0.5f, -0.5f, 0.0f   // 3: bottom left
+	};
+
+	unsigned int indices[] = {
+		0,1,2, // first triangle
+		1,2,3  // second triangle
 	};
 
 	shader_program = shaderProgram();
@@ -17,12 +23,17 @@ RenderContext::RenderContext(GLFWwindow* window) : window(window) {
 	// generate ids for vertex objects
 	glGenVertexArrays(1, &vertex_array_object);
 	glGenBuffers(1, &vertex_buffer_object);
+	glGenBuffers(1, &element_buffer_object);
 
 	// 0. bind vertex array object
 	glBindVertexArray(vertex_array_object);
 	// 1. copies vertices array into a buffer for OpenGL to use
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object); // binds buffer so changes can be made
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object); // binds buffer so changes can be made 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); 	
+
+	// loads indices into memory that is used by "glDrawElements"
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_object);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	// 2. sets the vertex attributes pointers
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // location 0 of vert shader, vec3 size of vertices, float values for each, no normalization(-1 to 1), size of each vertice, offset from start of vertices
 	glEnableVertexAttribArray(0);
@@ -40,7 +51,8 @@ void RenderContext::render() {
 	 // creates the program that interprets vertice data, loaded to gpu and just needs opengl calls to be triggered
 	glUseProgram(shader_program);
 	glBindVertexArray(vertex_array_object);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0); // unbind VAO after drawing
 }
 
