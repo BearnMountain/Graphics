@@ -5,16 +5,19 @@
 #include <iostream>
 #include <stdexcept>
 
-RenderContext::RenderContext(GLFWwindow* window) : window(window) {
-	float vertices[] = {
-		 0.5f,  0.5f, 0.0f,  // 0: top right
-		 0.5f, -0.5f, 0.0f,  // 1: bottom right
-		-0.5f,  0.5f, 0.0f,  // 2: top left
-		-0.5f, -0.5f, 0.0f   // 3: bottom left
-	};
+#include "stb_implementation.h"
 
+RenderContext::RenderContext(GLFWwindow* window) : window(window) {
+	// coords, colors, texture coords
+	
+	float vertices[] = {
+		 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+		 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+	};
 	unsigned int indices[] = {
-		0,1,2, // first triangle
+		0,1,3, // first triangle
 		1,2,3  // second triangle
 	};
 
@@ -27,16 +30,29 @@ RenderContext::RenderContext(GLFWwindow* window) : window(window) {
 
 	// 0. bind vertex array object
 	glBindVertexArray(vertex_array_object);
+
 	// 1. copies vertices array into a buffer for OpenGL to use
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object); // binds buffer so changes can be made 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); 	
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); 
 
-	// loads indices into memory that is used by "glDrawElements"
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_object);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
 	// 2. sets the vertex attributes pointers
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // location 0 of vert shader, vec3 size of vertices, float values for each, no normalization(-1 to 1), size of each vertice, offset from start of vertices
+	// cordinate attributes
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // location 0 of vert shader, vec3 size of vertices, float values for each, no normalization(-1 to 1), size of each vertice, offset from start of vertices
 	glEnableVertexAttribArray(0);
+
+	// color attributes
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	// texture attributes
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);  
+
+	loadTexture();
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
@@ -48,12 +64,46 @@ RenderContext::~RenderContext() {
 }
 
 void RenderContext::render() {
-	 // creates the program that interprets vertice data, loaded to gpu and just needs opengl calls to be triggered
+
+	// creates the program that interprets vertice data, loaded to gpu and just needs opengl calls to be triggered
 	glUseProgram(shader_program);
 	glBindVertexArray(vertex_array_object);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindVertexArray(vertex_array_object);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
 	glBindVertexArray(0); // unbind VAO after drawing
+	
+}
+
+void RenderContext::loadTexture() {
+	// binding texture to gpu
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	// texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	// set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	int width, height, nrChannels;
+	unsigned char* data = stbi_load("src/render/textures/wall_image.jpg", &width, &height, &nrChannels, 0);
+
+	// generate texture using loaded image
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	} else {
+		std::cout << "Failed to load texture" << std::endl;
+	}
+
+	// cleanup
+	stbi_image_free(data);
 }
 
 unsigned int RenderContext::shaderProgram() {
