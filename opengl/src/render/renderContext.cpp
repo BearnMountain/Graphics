@@ -5,16 +5,20 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "stb_implementation.h"
 
 RenderContext::RenderContext(GLFWwindow* window) : window(window) {
 	// coords, colors, texture coords
 	
 	float vertices[] = {
-		 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-		 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+		 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f, //  1.0f, 1.0f, top right
+		 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f, //  1.0f, 0.0f, bottom right
+		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f, //  0.0f, 0.0f, bottom left
+		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f, //  0.0f, 1.0f  top left 
 	};
 	unsigned int indices[] = {
 		0,1,3, // first triangle
@@ -40,18 +44,18 @@ RenderContext::RenderContext(GLFWwindow* window) : window(window) {
 
 	// 2. sets the vertex attributes pointers
 	// cordinate attributes
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // location 0 of vert shader, vec3 size of vertices, float values for each, no normalization(-1 to 1), size of each vertice, offset from start of vertices
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); // location 0 of vert shader, vec3 size of vertices, float values for each, no normalization(-1 to 1), size of each vertice, offset from start of vertices
 	glEnableVertexAttribArray(0);
 
 	// color attributes
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-
+/*
 	// texture attributes
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);  
-
-	loadTexture();
+*/
+	// loadTexture();
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -67,10 +71,9 @@ void RenderContext::render() {
 
 	// creates the program that interprets vertice data, loaded to gpu and just needs opengl calls to be triggered
 	glUseProgram(shader_program);
-	glBindVertexArray(vertex_array_object);
 
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
+	// glBindTexture(GL_TEXTURE_2D, texture);
 	glBindVertexArray(vertex_array_object);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
